@@ -2,7 +2,7 @@ import { Star } from "./entities/star.js";
 import { UFO } from "./entities/ufo.js";
 import { TextObject } from "./entities/textObject.js";
 import { Drawable } from "./utils/drawable.js";
-import {levels, Level} from "./utils/levels.js";
+import { levels, Level } from "./utils/levels.js";
 
 export class Starfield {
   canvas: HTMLCanvasElement;
@@ -12,9 +12,8 @@ export class Starfield {
   currentLevel: number;
   ufosSpawned: number = 0;
   shipsMissed: number;
-
-
-  
+  crosshair: { x: number; y: number };
+  keysPressed: { [key: string]: boolean } = {};
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -22,13 +21,14 @@ export class Starfield {
     this.currentLevel = 0;
     this.ufosSpawned = 0;
     this.shipsMissed = 0;
+    this.crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
 
     this.maxDepth = Math.max(this.canvas.width, this.canvas.height) * 1.5;
 
     this.resizeCanvas();
     window.addEventListener("resize", this.resizeCanvas.bind(this));
     this.intitStars();
-}
+  }
 
   resizeCanvas() {
     const width = window.innerWidth * 0.85;
@@ -46,23 +46,36 @@ export class Starfield {
     return levels[this.currentLevel];
   }
 
-
   intitStars() {
     this.stars = [];
     const levelConfig = this.currentLevelConfig;
     for (let i = 0; i < levelConfig.starNum; i++) {
-      this.stars.push(new Star(this.canvas.width, this.canvas.height, this.maxDepth));
+      this.stars.push(
+        new Star(this.canvas.width, this.canvas.height, this.maxDepth)
+      );
     }
   }
 
   spawnUFOs() {
     const levelConfig = this.currentLevelConfig;
     if (this.ufosSpawned < levelConfig.maxShips) {
-      const ufoCount = Math.min(Math.floor(Math.random() * 3) + 1, levelConfig.maxShips - this.ufosSpawned);
+      const ufoCount = Math.min(
+        Math.floor(Math.random() * 3) + 1,
+        levelConfig.maxShips - this.ufosSpawned
+      );
 
       for (let i = 0; i < ufoCount; i++) {
         if (Math.random() < levelConfig.ufoChance) {
-          this.stars.push(new UFO(this.canvas.width, this.canvas.height, this.maxDepth, levelConfig.ufoSize, levelConfig.ufoColor, levelConfig.ufoSpeed));
+          this.stars.push(
+            new UFO(
+              this.canvas.width,
+              this.canvas.height,
+              this.maxDepth,
+              levelConfig.ufoSize,
+              levelConfig.ufoColor,
+              levelConfig.ufoSpeed
+            )
+          );
           this.ufosSpawned += 1;
           console.log(`UFO spawned! ${this.ufosSpawned}`);
         }
@@ -71,7 +84,7 @@ export class Starfield {
   }
 
   updateStars() {
-    this.stars = this.stars.filter(star => {
+    this.stars = this.stars.filter((star) => {
       if (star instanceof TextObject && star.isExpired()) {
         return false;
       }
@@ -83,7 +96,12 @@ export class Starfield {
         }
         star.update(this.canvas.width, this.canvas.height, this.maxDepth);
       } else if (star instanceof Star) {
-        star.update(this.canvas.width, this.canvas.height, this.maxDepth, this.currentLevelConfig.starSpeed);
+        star.update(
+          this.canvas.width,
+          this.canvas.height,
+          this.maxDepth,
+          this.currentLevelConfig.starSpeed
+        );
       }
       return true;
     });
@@ -95,11 +113,52 @@ export class Starfield {
       if (star instanceof TextObject) {
         star.draw(this.ctx);
       } else {
-        star.draw(this.ctx, this.canvas.width, this.canvas.height, levelConfig.starSize, levelConfig.starColor);
+        star.draw(
+          this.ctx,
+          this.canvas.width,
+          this.canvas.height,
+          levelConfig.starSize,
+          levelConfig.starColor
+        );
       }
     }
   }
-  
+
+  drawCrosshair() {
+    this.ctx.strokeStyle = "pink";
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.crosshair.x - 10, this.crosshair.y);
+    this.ctx.lineTo(this.crosshair.x + 10, this.crosshair.y);
+    this.ctx.moveTo(this.crosshair.x, this.crosshair.y - 10);
+    this.ctx.lineTo(this.crosshair.x, this.crosshair.y + 10);
+    this.ctx.stroke();
+
+    const radius = 6;
+    this.ctx.strokeStyle = "pink";
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.arc(this.crosshair.x, this.crosshair.y, radius, 0, 2 * Math.PI);
+    this.ctx.stroke();
+  }
+
+  moveCrosshair() {
+    const cursorSpeed = this.currentLevelConfig.cursorSpeed;
+    if (this.keysPressed["a"]) {
+      console.log("key pressed")
+      this.crosshair.x = Math.max(0, this.crosshair.x - cursorSpeed);
+    }
+    if (this.keysPressed["d"]) {
+      this.crosshair.x = Math.min(this.canvas.width, this.crosshair.x + cursorSpeed);
+    }
+    if (this.keysPressed["w"]) {
+      this.crosshair.y = Math.max(0, this.crosshair.y - cursorSpeed);
+    }
+    if (this.keysPressed["s"]) {
+      this.crosshair.y = Math.min(this.canvas.height, this.crosshair.y + cursorSpeed);
+    }
+  }
+
   loop(timeNow: number) {
     const levelConfig = this.currentLevelConfig;
     this.ctx.fillStyle = levelConfig.spaceColor;
@@ -107,7 +166,8 @@ export class Starfield {
 
     this.updateStars();
     this.drawStars();
-    this.spawnUFOs();
+    this.drawCrosshair();
+    this.moveCrosshair();
 
     requestAnimationFrame(this.loop.bind(this));
   }
