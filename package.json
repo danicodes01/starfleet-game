@@ -1,0 +1,26 @@
+{
+  "name": "starfleetgame",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "lite-server",
+    "watch": "tsc -w",
+    "dev": "concurrently \"npm:watch\" \"npm:start\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^20.14.12",
+    "lite-server": "^2.6.1",
+    "typescript": "^5.5.4"
+  },
+  "devDependencies": {
+    "lite-server": "^2.6.1",
+    "nodemon": "^3.1.4",
+    "concurrently": "^7.0.0"
+  }
+}
