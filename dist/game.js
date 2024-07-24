@@ -1,8 +1,10 @@
+import { Starfield } from "./starfield.js";
 export class Game {
     constructor(canvas) {
         this.canvas = canvas;
+        this.starfield = new Starfield(canvas);
     }
     start() {
-        console.log('Game started!');
+        this.starfield.start();
     }
 }
