@@ -1,4 +1,5 @@
 import { Star } from "./entities/star.js";
+import { UFO } from "./entities/ufo.js";
 import { Drawable } from "./utils/drawable.js";
 import {levels, Level} from "./utils/levels.js";
 
@@ -8,12 +9,15 @@ export class Starfield {
   ctx: CanvasRenderingContext2D;
   stars: Star[] = [];
   currentLevel: number;
+  ufosSpawned: number = 0;
+
   
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     this.currentLevel = 0;
+    this.ufosSpawned = 0;
 
     this.maxDepth = Math.max(this.canvas.width, this.canvas.height) * 1.5;
 
@@ -47,8 +51,31 @@ export class Starfield {
     }
   }
 
+  spawnUFOs() {
+    const levelConfig = this.currentLevelConfig;
+    if (this.ufosSpawned < levelConfig.maxShips) {
+      const ufoCount = Math.min(Math.floor(Math.random() * 3) + 1, levelConfig.maxShips - this.ufosSpawned);
+
+      for (let i = 0; i < ufoCount; i++) {
+        if (Math.random() < levelConfig.ufoChance) {
+          this.stars.push(new UFO(this.canvas.width, this.canvas.height, this.maxDepth, levelConfig.ufoSize, levelConfig.ufoColor, levelConfig.ufoSpeed));
+          this.ufosSpawned += 1;
+          console.log(`UFO spawned! ${this.ufosSpawned}`);
+        }
+      }
+    }
+  }
+
   updateStars() {
     this.stars = this.stars.filter(star => {
+      if(star instanceof UFO) {
+        if (star.isExpired()) {
+          this.ufosSpawned -= 1;
+          console.log(`UFO missed! ${this.ufosSpawned}`);
+          return false;
+        }
+        star.update(this.canvas.width, this.canvas.height, this.maxDepth);
+      }
        if (star instanceof Star) {
         star.update(this.canvas.width, this.canvas.height, this.maxDepth, this.currentLevelConfig.starSpeed);
       }
@@ -70,6 +97,7 @@ export class Starfield {
 
     this.updateStars();
     this.drawStars();
+    this.spawnUFOs();
 
     requestAnimationFrame(this.loop.bind(this));
   }
