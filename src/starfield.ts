@@ -264,14 +264,53 @@ export class Starfield {
         this.ufosSpawned = 0;
         this.shipsDestroyed = 0;
         this.shipsMissed = 0;
+        this.levelPoints = 0;
         this.maxShips = levels[this.currentLevel].maxShips;
         this.initStars();
       } else {
         this.levelMessage = "Game Over!";
         this.levelMessageStartTime = Date.now();
-        this.levelMessageDuration = Infinity;
+        this.levelMessageDuration = 3000;
+
+        // Show "Game Over!" message for 3 seconds
+        setTimeout(() => {
+          this.levelMessage = `Total Points: ${this.totalPoints}`;
+          this.levelMessageStartTime = Date.now();
+
+          // Show "Total Points" message for 3 seconds
+          setTimeout(() => {
+            this.levelMessage = "Hit any key to play again!";
+            this.levelMessageStartTime = Date.now();
+            this.levelMessageDuration = Infinity;
+
+            // Add event listener for key press to restart the game
+            const restartGame = (event: KeyboardEvent) => {
+              window.removeEventListener("keydown", restartGame);
+              this.resetGame();
+            };
+            window.addEventListener("keydown", restartGame);
+          }, 3000);
+        }, 3000);
       }
     }
+  }
+
+  resetGame() {
+    this.currentLevel = 0;
+    this.shipsMissed = 0;
+    this.shipsDestroyed = 0;
+    this.totalPoints = 0;
+    this.levelPoints = 0;
+    this.ufosSpawned = 0;
+    this.maxShips = levels[this.currentLevel].maxShips;
+    this.levelMessage = `Level ${this.currentLevel + 1} Start!`;
+    this.levelMessageStartTime = Date.now();
+    this.levelMessageDuration = 3000; // Ensure duration is reset
+    this.showingLevelSummary = false;
+    this.summaryMessages = [];
+    this.summaryMessageIndex = 0;
+    this.initStars();
+    this.start();
   }
 
   checkLevelCompletion() {
