@@ -46,7 +46,7 @@ export const levels = [
         starSpeed: 25.0,
         starSize: 0.5,
         starColor: "black",
-        spaceColor: "white",
+        spaceColor: "grey",
         ufoSize: 50,
         ufoColor: "silver",
         ufoSpeed: 2,
