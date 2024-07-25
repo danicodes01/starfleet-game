@@ -7,6 +7,7 @@ export class Starfield {
         this.stars = [];
         this.keysPressed = {};
         this.levelMessage = [];
+        this.introComplete = false;
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
@@ -259,6 +260,8 @@ export class Starfield {
         }
     }
     loop(timeNow) {
+        if (!this.introComplete)
+            return;
         const levelConfig = this.currentLevelConfig;
         this.ctx.fillStyle = levelConfig.spaceColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);

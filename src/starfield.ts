@@ -25,6 +25,7 @@ export class Starfield {
   totalPoints: number;
   levelPoints: number;
   isTouchDevice: boolean;
+  introComplete: boolean = false;
 
   laserSound: HTMLAudioElement;
   explosionSound: HTMLAudioElement;
@@ -344,6 +345,8 @@ export class Starfield {
   }
 
   loop(timeNow: number) {
+    if (!this.introComplete) return; 
+
     const levelConfig = this.currentLevelConfig;
     this.ctx.fillStyle = levelConfig.spaceColor;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
