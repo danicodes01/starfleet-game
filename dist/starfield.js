@@ -5,15 +5,13 @@ import { levels } from "./utils/levels.js";
 export class Starfield {
     constructor(canvas) {
         this.stars = [];
-        this.ufosSpawned = 0;
         this.keysPressed = {};
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
+        this.crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
         this.currentLevel = 0;
         this.ufosSpawned = 0;
         this.shipsMissed = 0;
-        this.crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
-        this.maxDepth = Math.max(this.canvas.width, this.canvas.height) * 1.5;
         this.shipsDestroyed = 0;
         this.maxShips = levels[this.currentLevel].maxShips;
         this.levelMessage = `Level ${this.currentLevel + 1} Start!`;
@@ -26,6 +24,7 @@ export class Starfield {
         this.levelPoints = 0;
         this.laserSound = new Audio("./assets/sounds/laser.wav");
         this.explosionSound = new Audio("./assets/sounds/explosion.wav");
+        this.maxDepth = Math.max(this.canvas.width, this.canvas.height) * 1.5;
         this.resizeCanvas();
         window.addEventListener("resize", this.resizeCanvas.bind(this));
         this.initStars();
@@ -39,7 +38,6 @@ export class Starfield {
         this.canvas.style.left = `${(window.innerWidth - width) / 2}px`;
         this.canvas.style.top = `${(window.innerHeight - height) / 2}px`;
         this.maxDepth = Math.max(this.canvas.width, this.canvas.height) * 1.5;
-        console.log(this.maxDepth, "hello");
     }
     get currentLevelConfig() {
         return levels[this.currentLevel];
@@ -59,7 +57,6 @@ export class Starfield {
                 if (Math.random() < levelConfig.ufoChance) {
                     this.stars.push(new UFO(this.canvas.width, this.canvas.height, this.maxDepth, levelConfig.ufoSize, levelConfig.ufoColor, levelConfig.ufoSpeed));
                     this.ufosSpawned += 1;
-                    console.log(`UFO spawned! ${this.ufosSpawned}`);
                 }
             }
         }
@@ -72,7 +69,6 @@ export class Starfield {
             if (star instanceof UFO) {
                 if (star.isExpired()) {
                     this.shipsMissed += 1;
-                    console.log(`UFO missed. Total missed: ${this.shipsMissed}`);
                     return false;
                 }
                 star.update(this.canvas.width, this.canvas.height, this.maxDepth);
@@ -110,10 +106,21 @@ export class Starfield {
         this.ctx.arc(this.crosshair.x, this.crosshair.y, radius, 0, 2 * Math.PI);
         this.ctx.stroke();
     }
+    drawLevelMessage() {
+        this.ctx.fillStyle = "white";
+        this.ctx.font = "30px 'Press Start 2P'";
+        this.ctx.textAlign = "center";
+        this.ctx.fillText(this.levelMessage, this.canvas.width / 2, this.canvas.height / 2);
+    }
+    drawScore() {
+        this.ctx.fillStyle = "white";
+        this.ctx.font = "20px 'Press Start 2P'";
+        this.ctx.textAlign = "left";
+        this.ctx.fillText(`${this.totalPoints}`, 20, 40);
+    }
     moveCrosshair() {
         const cursorSpeed = this.currentLevelConfig.cursorSpeed;
         if (this.keysPressed["a"]) {
-            console.log("key pressed");
             this.crosshair.x = Math.max(0, this.crosshair.x - cursorSpeed);
         }
         if (this.keysPressed["d"]) {
@@ -147,29 +154,9 @@ export class Starfield {
                     this.totalPoints += 100;
                     this.levelPoints += 100;
                     this.shipsDestroyed += 1;
-                    console.log(`UFO destroyed. Total destroyed: ${this.shipsDestroyed}`);
                 }
             }
         }
-    }
-    drawLevelMessage() {
-        this.ctx.fillStyle = "white";
-        this.ctx.font = "30px 'Press Start 2P'";
-        this.ctx.textAlign = "center";
-        this.ctx.fillText(this.levelMessage, this.canvas.width / 2, this.canvas.height / 2);
-    }
-    drawScore() {
-        this.ctx.fillStyle = "white";
-        this.ctx.font = "10px 'Press Start 2P'";
-        this.ctx.textAlign = "left";
-        this.ctx.fillText(`${this.levelPoints}`, 20, 30); // Adjust the y-coordinate as needed
-    }
-    drawHighScore() {
-        this.ctx.fillStyle = "white";
-        this.ctx.font = "10px 'Press Start 2P'";
-        this.ctx.textAlign = "center";
-        this.ctx.fillText(`High Score`, this.ctx.canvas.width / 2, 30); // Centered at the top middle
-        this.ctx.fillText(`${this.totalPoints}`, this.ctx.canvas.width / 2, 50); // Centered at the top middle
     }
     showNextLevelSummary() {
         if (this.summaryMessageIndex < this.summaryMessages.length) {
@@ -262,7 +249,6 @@ export class Starfield {
         this.drawStars();
         this.drawCrosshair();
         this.drawScore();
-        this.drawHighScore();
         this.moveCrosshair();
         if (this.ufosSpawned < this.maxShips &&
             Date.now() - this.levelMessageStartTime > this.levelMessageDuration) {
