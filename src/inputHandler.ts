@@ -1,31 +1,32 @@
 import { Starfield } from "./starfield.js";
 
 export class InputHandler {
-  constructor(starfield: Starfield) {
-    document.addEventListener("keydown", (e) => {
-      starfield.keysPressed[e.key] = true;
-      if (e.key === " ") {
-        starfield.shoot(starfield.crosshair.x, starfield.crosshair.y);
-      }
-    });
+    constructor(starfield: Starfield) {
+        document.addEventListener("keydown", (e) => {
+            starfield.keysPressed[e.key] = true;
+            if (e.key === " ") {
+                starfield.shoot(starfield.crosshair.x, starfield.crosshair.y);
+            }
+        });
 
-    document.addEventListener("keyup", (e) => {
-      starfield.keysPressed[e.key] = false;
-    });
+        document.addEventListener("keyup", (e) => {
+            starfield.keysPressed[e.key] = false;
+        });
 
-    // Add touch event listeners
-    document.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      starfield.shoot(touch.clientX, touch.clientY);
-    });
+        if (starfield.isTouchDevice) {
+            document.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                const pos = starfield.getTouchPos(starfield.canvas, e);
+                starfield.shoot(pos.x, pos.y);
+            });
 
-    document.addEventListener("touchmove", (e) => {
-      e.preventDefault();
-    });
+            document.addEventListener("touchmove", (e) => {
+                e.preventDefault();
+            });
 
-    document.addEventListener("touchend", (e) => {
-      e.preventDefault();
-    });
-  }
+            document.addEventListener("touchend", (e) => {
+                e.preventDefault();
+            });
+        }
+    }
 }

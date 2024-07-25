@@ -9,17 +9,18 @@ export class InputHandler {
         document.addEventListener("keyup", (e) => {
             starfield.keysPressed[e.key] = false;
         });
-        // Add touch event listeners
-        document.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            starfield.shoot(touch.clientX, touch.clientY);
-        });
-        document.addEventListener("touchmove", (e) => {
-            e.preventDefault();
-        });
-        document.addEventListener("touchend", (e) => {
-            e.preventDefault();
-        });
+        if (starfield.isTouchDevice) {
+            document.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                const pos = starfield.getTouchPos(starfield.canvas, e);
+                starfield.shoot(pos.x, pos.y);
+            });
+            document.addEventListener("touchmove", (e) => {
+                e.preventDefault();
+            });
+            document.addEventListener("touchend", (e) => {
+                e.preventDefault();
+            });
+        }
     }
 }

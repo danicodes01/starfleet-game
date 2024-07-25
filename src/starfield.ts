@@ -16,7 +16,7 @@ export class Starfield {
   crosshair: { x: number; y: number };
   keysPressed: { [key: string]: boolean } = {};
   maxShips: number;
-  levelMessage: string;
+  levelMessage: string[] = [];
   levelMessageDuration: number;
   levelMessageStartTime: number;
   showingLevelSummary: boolean;
@@ -38,7 +38,7 @@ export class Starfield {
     this.shipsMissed = 0;
     this.shipsDestroyed = 0;
     this.maxShips = levels[this.currentLevel].maxShips;
-    this.levelMessage = `Level ${this.currentLevel + 1} Start!`;
+    this.levelMessage = [`Level ${this.currentLevel + 1} Start!`];
     this.levelMessageDuration = 3000;
     this.levelMessageStartTime = Date.now();
     this.showingLevelSummary = false;
@@ -79,6 +79,15 @@ export class Starfield {
     for (let i = 0; i < levelConfig.starNum; i++) {
       this.stars.push(new Star(this.canvas.width, this.canvas.height, this.maxDepth));
     }
+  }
+
+  getTouchPos(canvas: HTMLCanvasElement, touchEvent: TouchEvent) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = touchEvent.touches[0];
+    return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+    };
   }
 
   spawnUFOs() {
@@ -149,7 +158,7 @@ export class Starfield {
 
   drawCrosshair() {
     if (this.isTouchDevice) {
-      return; 
+      return;
     }
     this.ctx.strokeStyle = "pink";
     this.ctx.lineWidth = 2;
@@ -172,11 +181,10 @@ export class Starfield {
     this.ctx.fillStyle = "white";
     this.ctx.font = "15px 'Press Start 2P'";
     this.ctx.textAlign = "center";
-    this.ctx.fillText(
-      this.levelMessage,
-      this.canvas.width / 2,
-      this.canvas.height / 2
-    );
+    const lineHeight = 40;
+    this.levelMessage.forEach((message, index) => {
+        this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height / 2 + index * lineHeight);
+    });
   }
 
   drawScore() {
@@ -240,7 +248,7 @@ export class Starfield {
 
   showNextLevelSummary() {
     if (this.summaryMessageIndex < this.summaryMessages.length) {
-      this.levelMessage = this.summaryMessages[this.summaryMessageIndex];
+      this.levelMessage = [this.summaryMessages[this.summaryMessageIndex]];
       this.levelMessageStartTime = Date.now();
       this.summaryMessageIndex += 1;
 
@@ -249,7 +257,7 @@ export class Starfield {
       this.showingLevelSummary = false;
       if (this.currentLevel + 1 < levels.length) {
         this.currentLevel += 1;
-        this.levelMessage = `Level ${this.currentLevel + 1} Start!`;
+        this.levelMessage = [`Level ${this.currentLevel + 1} Start!`];
         this.levelMessageStartTime = Date.now();
         this.levelMessageDuration = 3000; 
         this.ufosSpawned = 0;
@@ -259,24 +267,31 @@ export class Starfield {
         this.maxShips = levels[this.currentLevel].maxShips;
         this.initStars();
       } else {
-        this.levelMessage = "Game Over!";
+        this.levelMessage = ["Game Over!"];
         this.levelMessageStartTime = Date.now();
         this.levelMessageDuration = 3000;
 
         setTimeout(() => {
-          this.levelMessage = `Total Points: ${this.totalPoints}`;
+          this.levelMessage = [`New High Score:`,`${this.totalPoints}`];
           this.levelMessageStartTime = Date.now();
 
           setTimeout(() => {
-            this.levelMessage = "Hit any key to play again!";
+            this.levelMessage = ["Press Enter or Tap","To Play Again!"];
             this.levelMessageStartTime = Date.now();
             this.levelMessageDuration = Infinity;
-            
+
             const restartGame = (event: KeyboardEvent) => {
               window.removeEventListener("keydown", restartGame);
               this.resetGame();
             };
+
+            const restartGameTouch = (event: TouchEvent) => {
+              window.removeEventListener("touchstart", restartGameTouch);
+              this.resetGame();
+            };
+
             window.addEventListener("keydown", restartGame);
+            window.addEventListener("touchstart", restartGameTouch);
           }, 3000);
         }, 3000);
       }
@@ -291,7 +306,7 @@ export class Starfield {
     this.levelPoints = 0;
     this.ufosSpawned = 0;
     this.maxShips = levels[this.currentLevel].maxShips;
-    this.levelMessage = `Level ${this.currentLevel + 1} Start!`;
+    this.levelMessage = [`Level ${this.currentLevel + 1} Start!`];
     this.levelMessageStartTime = Date.now();
     this.levelMessageDuration = 3000; 
     this.showingLevelSummary = false;
