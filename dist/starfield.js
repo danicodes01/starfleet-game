@@ -22,8 +22,8 @@ export class Starfield {
         this.summaryMessageIndex = 0;
         this.totalPoints = 0;
         this.levelPoints = 0;
-        this.laserSound = new Audio("./assets/sounds/laser.wav");
-        this.explosionSound = new Audio("./assets/sounds/explosion.wav");
+        this.laserSound = new Audio("/assets/sounds/laser.wav");
+        this.explosionSound = new Audio("/assets/sounds/explosion.wav");
         this.maxDepth = Math.max(this.canvas.width, this.canvas.height) * 1.5;
         this.resizeCanvas();
         window.addEventListener("resize", this.resizeCanvas.bind(this));
