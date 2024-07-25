@@ -8,17 +8,17 @@ export class Star implements Drawable {
     constructor(canvasWidth: number, canvasHeight: number, maxDepth: number) {
         this.x = Math.random() * canvasWidth;
         this.y = Math.random() * canvasHeight;
-        this.z = Math.random();
+        this.z = Math.random() * maxDepth;
     }
 
     update(canvasWidth: number, canvasHeight: number, maxDepth: number, speed: number) {
         this.z -= speed;
         if (this.z <= 0) {
-            this.x = Math.random() * canvasWidth;
-            this.y = Math.random() * canvasHeight;
-            this.z = maxDepth;
+          this.z = maxDepth;
+          this.x = Math.random() * canvasWidth;
+          this.y = Math.random() * canvasHeight;
         }
-    }
+      }
 
     draw(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number, sizeFactor: number, color: string) {
         let x = (this.x - canvasWidth / 2) * (canvasWidth / this.z) + canvasWidth / 2;

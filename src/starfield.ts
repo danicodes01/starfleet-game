@@ -17,6 +17,13 @@ export class Starfield {
   laserSound: HTMLAudioElement;
   explosionSound: HTMLAudioElement;
   shipsDestroyed: number;
+  maxShips: number;
+  levelMessage: string;
+  levelMessageDuration: number;
+  levelMessageStartTime: number;
+  showingLevelSummary: boolean;
+  summaryMessages: string[];
+  summaryMessageIndex: number;
 
 
   constructor(canvas: HTMLCanvasElement) {
@@ -28,13 +35,20 @@ export class Starfield {
     this.crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
     this.maxDepth = Math.max(this.canvas.width, this.canvas.height) * 1.5;
     this.shipsDestroyed = 0;
+    this.maxShips = levels[this.currentLevel].maxShips;
+    this.levelMessage = `Level ${this.currentLevel + 1} Start!`;
+    this.levelMessageDuration = 3000;
+    this.levelMessageStartTime = Date.now();
+    this.showingLevelSummary = false;
+    this.summaryMessages = [];
+    this.summaryMessageIndex = 0;
 
     this.laserSound = new Audio("./assets/sounds/laser.wav");
     this.explosionSound = new Audio("./assets/sounds/explosion.wav");
 
     this.resizeCanvas();
     window.addEventListener("resize", this.resizeCanvas.bind(this));
-    this.intitStars();
+    this.initStars();
   }
 
   resizeCanvas() {
@@ -53,7 +67,7 @@ export class Starfield {
     return levels[this.currentLevel];
   }
 
-  intitStars() {
+  initStars() {
     this.stars = [];
     const levelConfig = this.currentLevelConfig;
     for (let i = 0; i < levelConfig.starNum; i++) {
@@ -189,6 +203,69 @@ export class Starfield {
     }
   }
 
+  drawLevelMessage() {
+    this.ctx.fillStyle = "white";
+    this.ctx.font = "30px 'Press Start 2P'";
+    this.ctx.textAlign = "center";
+    this.ctx.fillText(
+      this.levelMessage,
+      this.canvas.width / 2,
+      this.canvas.height / 2
+    );
+  }
+
+  showNextLevelSummary() {
+    if (this.summaryMessageIndex < this.summaryMessages.length) {
+      this.levelMessage = this.summaryMessages[this.summaryMessageIndex];
+      this.levelMessageStartTime = Date.now();
+      this.summaryMessageIndex += 1;
+
+      setTimeout(() => this.showNextLevelSummary(), 3000);
+    } else {
+      this.showingLevelSummary = false;
+      if (this.currentLevel + 1 < levels.length) {
+        this.currentLevel += 1;
+        this.levelMessage = `Level ${this.currentLevel + 1} Start!`;
+        this.levelMessageStartTime = Date.now();
+        this.levelMessageDuration = 3000; // Reset the duration for the new level
+        this.ufosSpawned = 0;
+        this.shipsDestroyed = 0;
+        this.shipsMissed = 0;
+        this.maxShips = levels[this.currentLevel].maxShips;
+        this.initStars();
+      } else {
+        this.levelMessage = "Game Over!";
+        this.levelMessageStartTime = Date.now();
+        this.levelMessageDuration = Infinity;
+      }
+    }
+  }
+
+  checkLevelCompletion() {
+    const levelConfig = this.currentLevelConfig;
+    const totalShipsProcessed = this.shipsDestroyed + this.shipsMissed;
+
+    if (
+      this.ufosSpawned >= levelConfig.maxShips &&
+      totalShipsProcessed >= levelConfig.maxShips
+    ) {
+      this.showingLevelSummary = true;
+      this.summaryMessages = [
+        `Level ${this.currentLevel + 1} Complete!`,
+        `${this.shipsMissed} ships missed!`,
+        `${this.shipsDestroyed} ships destroyed`,
+      ];
+
+      if (this.shipsMissed === 0) {
+        this.summaryMessages.push("Perfect Score!");
+        this.summaryMessages.push("Bonus 1000 Points!");
+      }
+
+      this.summaryMessageIndex = 0;
+      this.showNextLevelSummary();
+    }
+  }
+
   loop(timeNow: number) {
     const levelConfig = this.currentLevelConfig;
     this.ctx.fillStyle = levelConfig.spaceColor;
@@ -199,10 +276,26 @@ export class Starfield {
     this.drawCrosshair();
     this.moveCrosshair();
 
+    if (
+      this.ufosSpawned < this.maxShips &&
+      Date.now() - this.levelMessageStartTime > this.levelMessageDuration
+    ) {
+      this.spawnUFOs();
+    }
+    if (
+      Date.now() - this.levelMessageStartTime < this.levelMessageDuration ||
+      this.showingLevelSummary
+    ) {
+      this.drawLevelMessage();
+    } else {
+      this.checkLevelCompletion();
+    }
+
     requestAnimationFrame(this.loop.bind(this));
   }
 
   start() {
+    this.levelMessageStartTime = Date.now();
     requestAnimationFrame(this.loop.bind(this));
   }
 }

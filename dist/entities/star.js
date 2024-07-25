@@ -2,14 +2,14 @@ export class Star {
     constructor(canvasWidth, canvasHeight, maxDepth) {
         this.x = Math.random() * canvasWidth;
         this.y = Math.random() * canvasHeight;
-        this.z = Math.random();
+        this.z = Math.random() * maxDepth;
     }
     update(canvasWidth, canvasHeight, maxDepth, speed) {
         this.z -= speed;
         if (this.z <= 0) {
+            this.z = maxDepth;
             this.x = Math.random() * canvasWidth;
             this.y = Math.random() * canvasHeight;
-            this.z = maxDepth;
         }
     }
     draw(ctx, canvasWidth, canvasHeight, sizeFactor, color) {
