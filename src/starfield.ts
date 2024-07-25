@@ -24,7 +24,8 @@ export class Starfield {
   showingLevelSummary: boolean;
   summaryMessages: string[];
   summaryMessageIndex: number;
-
+  totalPoints: number;
+  levelPoints: number;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -42,6 +43,8 @@ export class Starfield {
     this.showingLevelSummary = false;
     this.summaryMessages = [];
     this.summaryMessageIndex = 0;
+    this.totalPoints = 0;
+    this.levelPoints = 0;
 
     this.laserSound = new Audio("./assets/sounds/laser.wav");
     this.explosionSound = new Audio("./assets/sounds/explosion.wav");
@@ -166,17 +169,23 @@ export class Starfield {
   moveCrosshair() {
     const cursorSpeed = this.currentLevelConfig.cursorSpeed;
     if (this.keysPressed["a"]) {
-      console.log("key pressed")
+      console.log("key pressed");
       this.crosshair.x = Math.max(0, this.crosshair.x - cursorSpeed);
     }
     if (this.keysPressed["d"]) {
-      this.crosshair.x = Math.min(this.canvas.width, this.crosshair.x + cursorSpeed);
+      this.crosshair.x = Math.min(
+        this.canvas.width,
+        this.crosshair.x + cursorSpeed
+      );
     }
     if (this.keysPressed["w"]) {
       this.crosshair.y = Math.max(0, this.crosshair.y - cursorSpeed);
     }
     if (this.keysPressed["s"]) {
-      this.crosshair.y = Math.min(this.canvas.height, this.crosshair.y + cursorSpeed);
+      this.crosshair.y = Math.min(
+        this.canvas.height,
+        this.crosshair.y + cursorSpeed
+      );
     }
   }
 
@@ -188,14 +197,23 @@ export class Starfield {
       if (star instanceof UFO) {
         const ufo = star as UFO;
         const size = (ufo.sizeFactor * this.canvas.width) / ufo.z;
-        const x = (ufo.x - this.canvas.width / 2) * (this.canvas.width / ufo.z) + this.canvas.width / 2;
-        const y = (ufo.y - this.canvas.height / 2) * (this.canvas.width / ufo.z) + this.canvas.height / 2;
-        
+        const x =
+          (ufo.x - this.canvas.width / 2) * (this.canvas.width / ufo.z) +
+          this.canvas.width / 2;
+        const y =
+          (ufo.y - this.canvas.height / 2) * (this.canvas.width / ufo.z) +
+          this.canvas.height / 2;
+
         // Check collision with crosshair
-        if (Math.abs(x - this.crosshair.x) < size / 2 && Math.abs(y - this.crosshair.y) < size / 2) {
+        if (
+          Math.abs(x - this.crosshair.x) < size / 2 &&
+          Math.abs(y - this.crosshair.y) < size / 2
+        ) {
           this.explosionSound.currentTime = 0;
           this.explosionSound.play();
           this.stars[i] = new TextObject(x, y, "😻 +100", "white", 20, 2000);
+          this.totalPoints += 100;
+          this.levelPoints += 100;
           this.shipsDestroyed += 1;
           console.log(`UFO destroyed. Total destroyed: ${this.shipsDestroyed}`);
         }
@@ -212,6 +230,21 @@ export class Starfield {
       this.canvas.width / 2,
       this.canvas.height / 2
     );
+  }
+
+  drawScore() {
+    this.ctx.fillStyle = "white";
+    this.ctx.font = "10px 'Press Start 2P'";
+    this.ctx.textAlign = "left";
+    this.ctx.fillText(`${this.levelPoints}`, 20, 30); // Adjust the y-coordinate as needed
+  }
+
+  drawHighScore() {
+    this.ctx.fillStyle = "white";
+    this.ctx.font = "10px 'Press Start 2P'";
+    this.ctx.textAlign = "center";
+    this.ctx.fillText(`High Score`, this.ctx.canvas.width / 2, 30); // Centered at the top middle
+    this.ctx.fillText(`${this.totalPoints}`, this.ctx.canvas.width / 2, 50); // Centered at the top middle
   }
 
   showNextLevelSummary() {
@@ -254,11 +287,13 @@ export class Starfield {
         `Level ${this.currentLevel + 1} Complete!`,
         `${this.shipsMissed} ships missed!`,
         `${this.shipsDestroyed} ships destroyed`,
+        `${this.levelPoints} / ${levelConfig.maxShips * 100} points!`,
       ];
 
       if (this.shipsMissed === 0) {
         this.summaryMessages.push("Perfect Score!");
         this.summaryMessages.push("Bonus 1000 Points!");
+        this.totalPoints += 1000;
       }
 
       this.summaryMessageIndex = 0;
@@ -274,6 +309,8 @@ export class Starfield {
     this.updateStars();
     this.drawStars();
     this.drawCrosshair();
+    this.drawScore();
+    this.drawHighScore();
     this.moveCrosshair();
 
     if (
