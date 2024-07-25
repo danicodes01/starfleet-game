@@ -14,6 +14,9 @@ export class Starfield {
         this.shipsMissed = 0;
         this.crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
         this.maxDepth = Math.max(this.canvas.width, this.canvas.height) * 1.5;
+        this.shipsDestroyed = 0;
+        this.laserSound = new Audio("./assets/sounds/laser.wav");
+        this.explosionSound = new Audio("./assets/sounds/explosion.wav");
         this.resizeCanvas();
         window.addEventListener("resize", this.resizeCanvas.bind(this));
         this.intitStars();
@@ -112,6 +115,27 @@ export class Starfield {
         }
         if (this.keysPressed["s"]) {
             this.crosshair.y = Math.min(this.canvas.height, this.crosshair.y + cursorSpeed);
+        }
+    }
+    shoot() {
+        this.laserSound.currentTime = 0;
+        this.laserSound.play();
+        for (let i = 0; i < this.stars.length; i++) {
+            const star = this.stars[i];
+            if (star instanceof UFO) {
+                const ufo = star;
+                const size = (ufo.sizeFactor * this.canvas.width) / ufo.z;
+                const x = (ufo.x - this.canvas.width / 2) * (this.canvas.width / ufo.z) + this.canvas.width / 2;
+                const y = (ufo.y - this.canvas.height / 2) * (this.canvas.width / ufo.z) + this.canvas.height / 2;
+                // Check collision with crosshair
+                if (Math.abs(x - this.crosshair.x) < size / 2 && Math.abs(y - this.crosshair.y) < size / 2) {
+                    this.explosionSound.currentTime = 0;
+                    this.explosionSound.play();
+                    this.stars[i] = new TextObject(x, y, "😻 +100", "white", 20, 2000);
+                    this.shipsDestroyed += 1;
+                    console.log(`UFO destroyed. Total destroyed: ${this.shipsDestroyed}`);
+                }
+            }
         }
     }
     loop(timeNow) {
