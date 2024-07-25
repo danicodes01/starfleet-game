@@ -4,8 +4,8 @@ export class InputHandler {
   constructor(starfield: Starfield) {
     document.addEventListener("keydown", (e) => {
       starfield.keysPressed[e.key] = true;
-      if(e.key === " ") {
-        starfield.shoot()
+      if (e.key === " ") {
+        starfield.shoot(starfield.crosshair.x, starfield.crosshair.y);
       }
     });
 
@@ -13,19 +13,15 @@ export class InputHandler {
       starfield.keysPressed[e.key] = false;
     });
 
+    // Add touch event listeners
     document.addEventListener("touchstart", (e) => {
       e.preventDefault();
       const touch = e.touches[0];
-      starfield.crosshair.x = touch.clientX;
-      starfield.crosshair.y = touch.clientY;
-      starfield.shoot();
+      starfield.shoot(touch.clientX, touch.clientY);
     });
 
     document.addEventListener("touchmove", (e) => {
       e.preventDefault();
-      const touch = e.touches[0];
-      starfield.crosshair.x = touch.clientX;
-      starfield.crosshair.y = touch.clientY;
     });
 
     document.addEventListener("touchend", (e) => {

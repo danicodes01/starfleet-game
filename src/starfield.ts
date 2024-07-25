@@ -24,10 +24,11 @@ export class Starfield {
   summaryMessageIndex: number;
   totalPoints: number;
   levelPoints: number;
+  isTouchDevice: boolean;
 
   laserSound: HTMLAudioElement;
   explosionSound: HTMLAudioElement;
-  
+
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
@@ -45,10 +46,12 @@ export class Starfield {
     this.summaryMessageIndex = 0;
     this.totalPoints = 0;
     this.levelPoints = 0;
-    
+
     this.laserSound = new Audio("/assets/sounds/laser.wav");
     this.explosionSound = new Audio("/assets/sounds/explosion.wav");
     this.maxDepth = Math.max(this.canvas.width, this.canvas.height) * 1.5;
+
+    this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
     this.resizeCanvas();
     window.addEventListener("resize", this.resizeCanvas.bind(this));
@@ -74,9 +77,7 @@ export class Starfield {
     this.stars = [];
     const levelConfig = this.currentLevelConfig;
     for (let i = 0; i < levelConfig.starNum; i++) {
-      this.stars.push(
-        new Star(this.canvas.width, this.canvas.height, this.maxDepth)
-      );
+      this.stars.push(new Star(this.canvas.width, this.canvas.height, this.maxDepth));
     }
   }
 
@@ -147,6 +148,9 @@ export class Starfield {
   }
 
   drawCrosshair() {
+    if (this.isTouchDevice) {
+      return; 
+    }
     this.ctx.strokeStyle = "pink";
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
@@ -163,10 +167,10 @@ export class Starfield {
     this.ctx.arc(this.crosshair.x, this.crosshair.y, radius, 0, 2 * Math.PI);
     this.ctx.stroke();
   }
-  
+
   drawLevelMessage() {
     this.ctx.fillStyle = "white";
-    this.ctx.font = "30px 'Press Start 2P'";
+    this.ctx.font = "15px 'Press Start 2P'";
     this.ctx.textAlign = "center";
     this.ctx.fillText(
       this.levelMessage,
@@ -203,9 +207,8 @@ export class Starfield {
       );
     }
   }
-  
 
-  shoot() {
+  shoot(x: number, y: number) {
     this.laserSound.currentTime = 0;
     this.laserSound.play();
     for (let i = 0; i < this.stars.length; i++) {
@@ -213,21 +216,20 @@ export class Starfield {
       if (star instanceof UFO) {
         const ufo = star as UFO;
         const size = (ufo.sizeFactor * this.canvas.width) / ufo.z;
-        const x =
+        const ufoX =
           (ufo.x - this.canvas.width / 2) * (this.canvas.width / ufo.z) +
           this.canvas.width / 2;
-        const y =
+        const ufoY =
           (ufo.y - this.canvas.height / 2) * (this.canvas.width / ufo.z) +
           this.canvas.height / 2;
 
-        // Check collision with crosshair
         if (
-          Math.abs(x - this.crosshair.x) < size / 2 &&
-          Math.abs(y - this.crosshair.y) < size / 2
+          Math.abs(ufoX - x) < size / 2 &&
+          Math.abs(ufoY - y) < size / 2
         ) {
           this.explosionSound.currentTime = 0;
           this.explosionSound.play();
-          this.stars[i] = new TextObject(x, y, "😻 +100", "white", 20, 2000);
+          this.stars[i] = new TextObject(ufoX, ufoY, "😻 +100", "white", 20, 2000);
           this.totalPoints += 100;
           this.levelPoints += 100;
           this.shipsDestroyed += 1;
@@ -249,7 +251,7 @@ export class Starfield {
         this.currentLevel += 1;
         this.levelMessage = `Level ${this.currentLevel + 1} Start!`;
         this.levelMessageStartTime = Date.now();
-        this.levelMessageDuration = 3000; // Reset the duration for the new level
+        this.levelMessageDuration = 3000; 
         this.ufosSpawned = 0;
         this.shipsDestroyed = 0;
         this.shipsMissed = 0;
@@ -261,18 +263,15 @@ export class Starfield {
         this.levelMessageStartTime = Date.now();
         this.levelMessageDuration = 3000;
 
-        // Show "Game Over!" message for 3 seconds
         setTimeout(() => {
           this.levelMessage = `Total Points: ${this.totalPoints}`;
           this.levelMessageStartTime = Date.now();
 
-          // Show "Total Points" message for 3 seconds
           setTimeout(() => {
             this.levelMessage = "Hit any key to play again!";
             this.levelMessageStartTime = Date.now();
             this.levelMessageDuration = Infinity;
-
-            // Add event listener for key press to restart the game
+            
             const restartGame = (event: KeyboardEvent) => {
               window.removeEventListener("keydown", restartGame);
               this.resetGame();
@@ -294,7 +293,7 @@ export class Starfield {
     this.maxShips = levels[this.currentLevel].maxShips;
     this.levelMessage = `Level ${this.currentLevel + 1} Start!`;
     this.levelMessageStartTime = Date.now();
-    this.levelMessageDuration = 3000; // Ensure duration is reset
+    this.levelMessageDuration = 3000; 
     this.showingLevelSummary = false;
     this.summaryMessages = [];
     this.summaryMessageIndex = 0;
@@ -338,7 +337,9 @@ export class Starfield {
     this.drawStars();
     this.drawCrosshair();
     this.drawScore();
-    this.moveCrosshair();
+    if (!this.isTouchDevice) {
+      this.moveCrosshair();
+    }
 
     if (
       this.ufosSpawned < this.maxShips &&
