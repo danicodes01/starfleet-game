@@ -1,5 +1,6 @@
 import { Star } from "./entities/star.js";
 import { UFO } from "./entities/ufo.js";
+import { BossUFO } from "./entities/bossUFO.js";
 import { TextObject } from "./entities/textObject.js";
 import { Drawable } from "./utils/drawable.js";
 import { levels, Level } from "./utils/levels.js";
@@ -26,6 +27,7 @@ export class Starfield {
   levelPoints: number;
   isTouchDevice: boolean;
   introComplete: boolean = false;
+  bossUFO?: BossUFO;
 
   laserSound: HTMLAudioElement;
   explosionSound: HTMLAudioElement;
@@ -93,25 +95,38 @@ export class Starfield {
 
   spawnUFOs() {
     const levelConfig = this.currentLevelConfig;
-    if (this.ufosSpawned < levelConfig.maxShips) {
-      const ufoCount = Math.min(
-        Math.floor(Math.random() * 3) + 1,
-        levelConfig.maxShips - this.ufosSpawned
+    if (levelConfig.boss && !this.bossUFO) {
+      this.bossUFO = new BossUFO(
+        this.canvas.width,
+        this.canvas.height,
+        this.maxDepth,
+        levelConfig.bossUfoSize || levelConfig.ufoSize,
+        levelConfig.ufoColor,
+        levelConfig.ufoSpeed,
+        levelConfig.bossHitsToKill || 30
       );
+      this.stars.push(this.bossUFO);
+    } else if (!levelConfig.boss) {
+      if (this.ufosSpawned < levelConfig.maxShips) {
+        const ufoCount = Math.min(
+          Math.floor(Math.random() * 3) + 1,
+          levelConfig.maxShips - this.ufosSpawned
+        );
 
-      for (let i = 0; i < ufoCount; i++) {
-        if (Math.random() < levelConfig.ufoChance) {
-          this.stars.push(
-            new UFO(
-              this.canvas.width,
-              this.canvas.height,
-              this.maxDepth,
-              levelConfig.ufoSize,
-              levelConfig.ufoColor,
-              levelConfig.ufoSpeed
-            )
-          );
-          this.ufosSpawned += 1;
+        for (let i = 0; i < ufoCount; i++) {
+          if (Math.random() < levelConfig.ufoChance) {
+            this.stars.push(
+              new UFO(
+                this.canvas.width,
+                this.canvas.height,
+                this.maxDepth,
+                levelConfig.ufoSize,
+                levelConfig.ufoColor,
+                levelConfig.ufoSpeed
+              )
+            );
+            this.ufosSpawned += 1;
+          }
         }
       }
     }
@@ -122,7 +137,7 @@ export class Starfield {
       if (star instanceof TextObject && star.isExpired()) {
         return false;
       }
-      if (star instanceof UFO) {
+      if (star instanceof UFO && !(star instanceof BossUFO)) {
         if (star.isExpired()) {
           this.shipsMissed += 1;
           return false;
@@ -135,6 +150,8 @@ export class Starfield {
           this.maxDepth,
           this.currentLevelConfig.starSpeed
         );
+      } else if (star instanceof BossUFO) {
+        star.update(this.canvas.width, this.canvas.height, this.maxDepth);
       }
       return true;
     });
@@ -238,13 +255,52 @@ export class Starfield {
         ) {
           this.explosionSound.currentTime = 0;
           this.explosionSound.play();
-          this.stars[i] = new TextObject(ufoX, ufoY, "😻 +100", "white", 20, 2000);
-          this.totalPoints += 100;
-          this.levelPoints += 100;
-          this.shipsDestroyed += 1;
+
+          if (ufo instanceof BossUFO) {
+            if (ufo.hit()) {
+              this.stars.splice(i, 1);
+              this.bossUFO = undefined;
+              this.stars[i] = new TextObject(ufoX, ufoY, "😻 +1000", "white", 20, 2000);
+              this.totalPoints += 1000; // Add 1000 points for defeating the boss
+              this.levelPoints += 1000;
+              this.shipsDestroyed += 1; // Increment ships destroyed count
+              this.endLevel(); // End the level after boss is defeated
+            }
+          } else {
+            this.stars[i] = new TextObject(ufoX, ufoY, "😻 +100", "white", 20, 2000);
+            this.totalPoints += 100;
+            this.levelPoints += 100;
+            this.shipsDestroyed += 1;
+            this.checkLevelCompletion(); // Check level completion after destroying a ship
+          }
         }
       }
     }
+  }
+
+  endLevel() {
+    this.showingLevelSummary = true;
+    this.summaryMessages = [
+      `Level ${this.currentLevel + 1} Complete!`,
+      `${this.shipsMissed} ships missed!`,
+      `${this.shipsDestroyed} ships destroyed`,
+      `${this.levelPoints} points!`,
+    ];
+
+    if (this.shipsMissed === 0) {
+      this.summaryMessages.push("Perfect Score!");
+      this.summaryMessages.push("Bonus 1000 Points!");
+      this.totalPoints += 1000;
+    }
+
+    if (this.currentLevel + 1 < levels.length) {
+      this.summaryMessages.push(`Next Level: ${this.currentLevel + 2}`);
+    } else {
+      this.summaryMessages.push("Game Over!");
+    }
+
+    this.summaryMessageIndex = 0;
+    this.showNextLevelSummary();
   }
 
   showNextLevelSummary() {
@@ -260,11 +316,12 @@ export class Starfield {
         this.currentLevel += 1;
         this.levelMessage = [`Level ${this.currentLevel + 1} Start!`];
         this.levelMessageStartTime = Date.now();
-        this.levelMessageDuration = 3000; 
+        this.levelMessageDuration = 3000;
         this.ufosSpawned = 0;
         this.shipsDestroyed = 0;
         this.shipsMissed = 0;
         this.levelPoints = 0;
+        this.bossUFO = undefined; // Reset boss UFO for the new level
         this.maxShips = levels[this.currentLevel].maxShips;
         this.initStars();
       } else {
@@ -273,11 +330,11 @@ export class Starfield {
         this.levelMessageDuration = 3000;
 
         setTimeout(() => {
-          this.levelMessage = [`New High Score:`,`${this.totalPoints}`];
+          this.levelMessage = [`New High Score:`, `${this.totalPoints}`];
           this.levelMessageStartTime = Date.now();
 
           setTimeout(() => {
-            this.levelMessage = ["Press Enter or Tap","To Play Again!"];
+            this.levelMessage = ["Press Enter or Tap", "To Play Again!"];
             this.levelMessageStartTime = Date.now();
             this.levelMessageDuration = Infinity;
 
@@ -306,10 +363,11 @@ export class Starfield {
     this.totalPoints = 0;
     this.levelPoints = 0;
     this.ufosSpawned = 0;
+    this.bossUFO = undefined; // Reset boss UFO for the new game
     this.maxShips = levels[this.currentLevel].maxShips;
     this.levelMessage = [`Level ${this.currentLevel + 1} Start!`];
     this.levelMessageStartTime = Date.now();
-    this.levelMessageDuration = 3000; 
+    this.levelMessageDuration = 3000;
     this.showingLevelSummary = false;
     this.summaryMessages = [];
     this.summaryMessageIndex = 0;
@@ -322,30 +380,14 @@ export class Starfield {
     const totalShipsProcessed = this.shipsDestroyed + this.shipsMissed;
 
     if (
-      this.ufosSpawned >= levelConfig.maxShips &&
-      totalShipsProcessed >= levelConfig.maxShips
+      (!levelConfig.boss && this.ufosSpawned >= levelConfig.maxShips && totalShipsProcessed >= levelConfig.maxShips)
     ) {
-      this.showingLevelSummary = true;
-      this.summaryMessages = [
-        `Level ${this.currentLevel + 1} Complete!`,
-        `${this.shipsMissed} ships missed!`,
-        `${this.shipsDestroyed} ships destroyed`,
-        `${this.levelPoints} / ${levelConfig.maxShips * 100} points!`,
-      ];
-
-      if (this.shipsMissed === 0) {
-        this.summaryMessages.push("Perfect Score!");
-        this.summaryMessages.push("Bonus 1000 Points!");
-        this.totalPoints += 1000;
-      }
-
-      this.summaryMessageIndex = 0;
-      this.showNextLevelSummary();
+      this.endLevel();
     }
   }
 
   loop(timeNow: number) {
-    if (!this.introComplete) return; 
+    if (!this.introComplete) return;
 
     const levelConfig = this.currentLevelConfig;
     this.ctx.fillStyle = levelConfig.spaceColor;
@@ -359,16 +401,13 @@ export class Starfield {
       this.moveCrosshair();
     }
 
-    if (
-      this.ufosSpawned < this.maxShips &&
-      Date.now() - this.levelMessageStartTime > this.levelMessageDuration
-    ) {
+    if (!levelConfig.boss && this.ufosSpawned < this.maxShips && Date.now() - this.levelMessageStartTime > this.levelMessageDuration) {
+      this.spawnUFOs();
+    } else if (levelConfig.boss && !this.bossUFO && Date.now() - this.levelMessageStartTime > this.levelMessageDuration && !this.showingLevelSummary) {
       this.spawnUFOs();
     }
-    if (
-      Date.now() - this.levelMessageStartTime < this.levelMessageDuration ||
-      this.showingLevelSummary
-    ) {
+
+    if (Date.now() - this.levelMessageStartTime < this.levelMessageDuration || this.showingLevelSummary) {
       this.drawLevelMessage();
     } else {
       this.checkLevelCompletion();
