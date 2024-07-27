@@ -14,12 +14,13 @@ export interface Level {
     boss?: boolean;
     bossHitsToKill?: number;
     bossUfoSize?: number;
+    specialUFO?: boolean;
   }
   
   export const levels: Level[] = [
     {
       starNum: 2000,
-      starSpeed: 15.0,
+      starSpeed: 10.0,
       starSize: .5,
       starColor: "white",
       spaceColor: "black",
@@ -33,7 +34,7 @@ export interface Level {
     },
     {
       starNum: 2000,
-      starSpeed: 15.0,
+      starSpeed: 10.0,
       starSize: 0.5,
       starColor: "white",
       spaceColor: "#021526",
@@ -43,11 +44,11 @@ export interface Level {
       ufoChance: 0.006,
       maxDepth: 1000,
       maxShips: 15,
-      cursorSpeed: 5,
+      cursorSpeed: 6,
     },
     {
       starNum: 2000,
-      starSpeed: 30.0,
+      starSpeed: 15.0,
       starSize: 0.5,
       starColor: "white",
       spaceColor: "#6EACDA",
@@ -58,10 +59,11 @@ export interface Level {
       maxDepth: 1000,
       maxShips: 20,
       cursorSpeed: 7,
+      specialUFO: true,
     },
     {
       starNum: 2000,
-      starSpeed: 25.0,
+      starSpeed: 16.0,
       starSize: 0.5,
       starColor: "black",
       spaceColor: "grey",
@@ -71,11 +73,11 @@ export interface Level {
       ufoChance: 0.008,
       maxDepth: 1000,
       maxShips: 25,
-      cursorSpeed: 5,
+      cursorSpeed: 6,
     },
     {
       starNum: 2000,
-      starSpeed: 30.0,
+      starSpeed: 20.0,
       starSize: 0.5,
       starColor: "white",
       spaceColor: "blue",
@@ -89,7 +91,7 @@ export interface Level {
     },
     {
       starNum: 2000,
-      starSpeed: 35.0,
+      starSpeed: 30.0,
       starSize: 0.5,
       starColor: "white",
       spaceColor: "#26355D",
@@ -99,21 +101,21 @@ export interface Level {
       ufoChance: 0.01,
       maxDepth: 1000,
       maxShips: 35,
-      cursorSpeed: 7,
+      cursorSpeed: 6,
     },
     {
       starNum: 2000,
-      starSpeed: 40.0,
+      starSpeed: 30.0,
       starSize: 0.5,
       starColor: "black",
       spaceColor: "pink",
       ufoSize: 100,
       ufoColor: "silver",
-      ufoSpeed: 3.5,
+      ufoSpeed: 4.0,
       ufoChance: 0.011,
       maxDepth: 1000,
       maxShips: 40,
-      cursorSpeed: 7,
+      cursorSpeed: 6,
     },
     {
       starNum: 2000,
@@ -127,7 +129,7 @@ export interface Level {
       ufoChance: 0.012,
       maxDepth: 1000,
       maxShips: 45,
-      cursorSpeed: 7,
+      cursorSpeed: 6,
     },
     {
       starNum: 2000,
@@ -141,7 +143,7 @@ export interface Level {
       ufoChance: 0.013,
       maxDepth: 1000,
       maxShips: 50,
-      cursorSpeed: 10,
+      cursorSpeed: 6,
     },
     {
       starNum: 2000,
@@ -154,10 +156,10 @@ export interface Level {
       ufoSpeed: 6,
       ufoChance: 0.014,
       maxDepth: 1000,
-      maxShips: 55,
-      cursorSpeed: 10,
+      maxShips: 10,
+      cursorSpeed: 6,
       boss: true,
-      bossHitsToKill: 10,
+      bossHitsToKill: 50,
       bossUfoSize: 300
     },
   ];
