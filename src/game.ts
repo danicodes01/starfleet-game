@@ -60,7 +60,7 @@ export class Game {
       this.starfield.ctx.shadowOffsetX = 3;
       this.starfield.ctx.shadowOffsetY = 3;
       this.starfield.ctx.shadowBlur = 5;
-      this.starfield.ctx.fillText("SPACEFLEET", this.canvas.width / 2, this.canvas.height / 2 + 40);
+      this.starfield.ctx.fillText("STARFLEET", this.canvas.width / 2, this.canvas.height / 2 + 40);
       
       this.starfield.ctx.shadowColor = "transparent"; 
       this.starfield.ctx.fillStyle = "white"; 
